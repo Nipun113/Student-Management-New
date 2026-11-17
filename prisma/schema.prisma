@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  WITHDRAWN
+}
+
+model Student {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(150)
+  email       String       @unique @db.VarChar(191)
+  phone       String?      @db.VarChar(20)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  enrollments Enrollment[]
+
+  @@index([name])
+  @@map("students")
+}
+
+model Course {
+  id          Int          @id @default(autoincrement())
+  code        String       @unique @db.VarChar(20)
+  name        String       @db.VarChar(150)
+  description String?      @db.Text
+  is_active   Boolean      @default(true)
+  created_at  DateTime     @default(now())
+  enrollments Enrollment[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id          Int              @id @default(autoincrement())
+  student_id  Int
+  course_id   Int
+  enrolled_at DateTime         @default(now())
+  status      EnrollmentStatus @default(ACTIVE)
+
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [course_id], references: [id], onDelete: Restrict)
+
+  @@unique([student_id, course_id])
+  @@index([student_id])
+  @@index([course_id])
+  @@map("enrollments")
+}
